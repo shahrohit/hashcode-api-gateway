@@ -34,7 +34,9 @@ function errorHandler(err: Error, _: Req, res: Res, __: NextFn) {
   if (err instanceof AxiosError) {
     const errData = err.response?.data;
     if (errData) {
-      res.status(errData.statusCode).json(errData);
+      res
+        .status(errData.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR)
+        .json(errData);
       return;
     }
   }
