@@ -1,6 +1,6 @@
 import axios from "axios";
 import { IncomingHttpHeaders } from "http";
-import { EMAIL_HEADER, ROLE_HEADER } from "./strings";
+import { USERNAME_HEADER, ROLE_HEADER } from "./strings";
 
 const forwardRequest = async (
   url: string,
@@ -14,8 +14,8 @@ const forwardRequest = async (
       method,
       data,
       headers: {
-        [EMAIL_HEADER]: headers["x-user-email"],
-        [ROLE_HEADER]: headers["x-user-role"],
+        [USERNAME_HEADER]: headers[USERNAME_HEADER],
+        [ROLE_HEADER]: headers[ROLE_HEADER],
       },
     });
     return [response.data, response.status];

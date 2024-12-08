@@ -11,6 +11,6 @@ export const generateToken = (
 
 export const verifyToken = (token: any, SECRET: string) => {
   if (!token) throw new Unauthorized("Access Denied");
-  const { email, role } = jwt.verify(token, SECRET) as jwt.JwtPayload;
-  return { email, role } as { email: string; role: string };
+  const { username, role } = jwt.verify(token, SECRET) as jwt.JwtPayload;
+  return { username, role } as { username: string; role: string };
 };

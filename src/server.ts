@@ -10,8 +10,13 @@ import errorHandler from "@middlewares/errorHandler";
 
 const app = express();
 
-app.use(cors());
-app.use(limiter);
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    credentials: true,
+  }),
+);
+// app.use(limiter);
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

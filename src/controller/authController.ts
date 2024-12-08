@@ -62,13 +62,13 @@ const login = async (req: Req, res: Res, next: NextFn) => {
     );
 
     const refreshtoken = generateToken(
-      { email: response.data.email, role: response.data.role },
+      { username: response.data.username, role: response.data.role },
       REFRESH_TOKEN,
       REFRESH_TOKEN_EXPIRY,
     );
 
     const accessToken = generateToken(
-      { email: response.data.email, role: response.data.role },
+      { username: response.data.username, role: response.data.role },
       ACCESS_TOKEN,
       ACCESS_TOKEN_EXPIRY,
     );
@@ -80,7 +80,11 @@ const login = async (req: Req, res: Res, next: NextFn) => {
       maxAge: REFRESH_TOKEN_MAX_AGE,
     });
 
-    res.status(status).json({ ...response, accessToken });
+    response.data = {
+      username: response.data.username,
+      accessToken: accessToken,
+    };
+    res.status(status).json(response);
   } catch (error) {
     next(error);
   }
@@ -116,8 +120,10 @@ const refreshAccessToken = async (req: Req, res: Res, next: NextFn) => {
       succcess: true,
       statusCode: StatusCodes.OK,
       message: TOKEN_REFESH_MSG,
-      data: {},
-      accessToken: newAccessToken,
+      data: {
+        username: decode.username,
+        accessToken: newAccessToken,
+      },
     });
   } catch (error) {
     next(error);

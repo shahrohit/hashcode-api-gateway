@@ -6,7 +6,7 @@ import {
 
 import { ACCESS_TOKEN } from "@config/server-config";
 import { verifyToken } from "@utils/tokens";
-import { EMAIL_HEADER, ROLE_HEADER } from "@utils/strings";
+import { USERNAME_HEADER, ROLE_HEADER } from "@utils/strings";
 
 const verifyLogin = async (req: Req, _: Res, next: NextFn) => {
   try {
@@ -15,7 +15,7 @@ const verifyLogin = async (req: Req, _: Res, next: NextFn) => {
     const decode = verifyToken(token, ACCESS_TOKEN);
 
     // set the headers
-    req.headers[EMAIL_HEADER] = decode.email;
+    req.headers[USERNAME_HEADER] = decode.username;
     req.headers[ROLE_HEADER] = decode.role;
 
     next();
@@ -34,7 +34,7 @@ const optionalVerifyLogin = async (req: Req, res: Res, next: NextFn) => {
     // for the logged in user else for the guest user
     if (token) {
       const decode = verifyToken(token, ACCESS_TOKEN);
-      req.headers[EMAIL_HEADER] = decode.email;
+      req.headers[USERNAME_HEADER] = decode.username;
       req.headers[ROLE_HEADER] = decode.role;
     }
 
