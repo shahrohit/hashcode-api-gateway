@@ -19,3 +19,4 @@ export const REFRESH_TOKEN_MAX_AGE = REFRESH_TOKEN_DAY * 24 * 60 * 60 * 1000;
 export const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL!;
 export const USER_SERVICE_URL = process.env.USER_SERVICE_URL!;
 export const SUBMISSION_SERVICE_URL = process.env.SUBMISSION_SERVICE_URL!;
+export const WS_SERVICE_URL = process.env.WS_SERVICE_URL!;
