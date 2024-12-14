@@ -20,3 +20,6 @@ export const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL!;
 export const USER_SERVICE_URL = process.env.USER_SERVICE_URL!;
 export const SUBMISSION_SERVICE_URL = process.env.SUBMISSION_SERVICE_URL!;
 export const WS_SERVICE_URL = process.env.WS_SERVICE_URL!;
+
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;

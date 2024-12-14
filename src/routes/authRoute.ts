@@ -5,9 +5,10 @@ import authController from "@controller/authController";
 
 const authRouter = express.Router();
 
-authRouter.post("/register", authController.register);
+authRouter.post("/send-otp", authController.register);
+authRouter.post("/verify", authController.register);
 authRouter.post("/login", authController.login);
-authRouter.post("/logout", verifyLogin, authController.logout);
+authRouter.post("/logout", authController.logout);
 authRouter.post("/refresh", authController.refreshAccessToken);
 
 export default authRouter;

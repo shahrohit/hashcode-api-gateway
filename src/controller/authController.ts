@@ -34,7 +34,6 @@ const register = async (req: Req, res: Res, next: NextFn) => {
     return createProxyMiddleware({
       target: `${targetUrl}/api/auth`,
       changeOrigin: true,
-      logger: console,
     })(req, res, next);
   } catch (error) {
     next(error);
@@ -43,7 +42,6 @@ const register = async (req: Req, res: Res, next: NextFn) => {
 
 const login = async (req: Req, res: Res, next: NextFn) => {
   try {
-    console.log("first");
     const account = req.query.account;
     const targetUrl = account === ADMIN ? ADMIN_SERVICE_URL : USER_SERVICE_URL;
 
@@ -61,7 +59,12 @@ const login = async (req: Req, res: Res, next: NextFn) => {
           proxyRes.on("end", () => {
             try {
               const response = JSON.parse(body);
-              console.log(response);
+
+              if (proxyRes.statusCode !== 200) {
+                res.status(proxyRes.statusCode ?? 500).json(response);
+                return;
+              }
+
               const refreshtoken = generateToken(
                 { username: response.data.username, role: response.data.role },
                 REFRESH_TOKEN,
@@ -87,8 +90,7 @@ const login = async (req: Req, res: Res, next: NextFn) => {
               };
               res.status(proxyRes.statusCode ?? 500).json(response);
             } catch (error) {
-              console.error("Error processing proxy response:", error);
-              res.status(500).json({ error: "Internal Server Error" });
+              next(error);
             }
           });
         },
@@ -140,7 +142,11 @@ const refreshAccessToken = async (req: Req, res: Res, next: NextFn) => {
 };
 
 const logout = (_: Req, res: Res) => {
-  res.clearCookie(REFRESH_TOKEN_NAME);
+  res.clearCookie(REFRESH_TOKEN_NAME, {
+    httpOnly: true,
+    secure: NODE_ENV !== DEV_ENV,
+    sameSite: "strict",
+  });
   res.status(StatusCodes.OK).json({
     success: true,
     statusCode: StatusCodes.OK,
@@ -148,11 +154,33 @@ const logout = (_: Req, res: Res) => {
   });
 };
 
+const OAuth = (req: Req, res: Res, next: NextFn) => {
+  try {
+    const user = req.user as { username: string };
+    const refreshtoken = generateToken(
+      { username: user.username, role: "User" },
+      REFRESH_TOKEN,
+      REFRESH_TOKEN_EXPIRY,
+    );
+
+    res.cookie(REFRESH_TOKEN_NAME, refreshtoken, {
+      httpOnly: true,
+      secure: NODE_ENV !== DEV_ENV,
+      sameSite: "strict",
+      maxAge: REFRESH_TOKEN_MAX_AGE,
+    });
+    res.redirect("http://localhost:3000");
+  } catch (error) {
+    next(error);
+  }
+};
+
 const adminController = {
   register,
   login,
   refreshAccessToken,
   logout,
+  OAuth,
 };
 
 export default adminController;
