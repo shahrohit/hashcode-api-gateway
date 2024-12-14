@@ -8,15 +8,15 @@ import { StatusCodes } from "http-status-codes";
 import {
   ACCESS_TOKEN,
   ACCESS_TOKEN_EXPIRY,
+  ADMIN_SERVICE_URL,
   NODE_ENV,
   REFRESH_TOKEN,
   REFRESH_TOKEN_EXPIRY,
   REFRESH_TOKEN_MAX_AGE,
+  USER_SERVICE_URL,
 } from "@config/server-config";
 
-import forwardRequest from "@utils/forwardRequest";
 import { generateToken, verifyToken } from "@utils/tokens";
-import { getAdminServiceURL, getUserServiceURL } from "@utils/getUrl";
 import {
   ADMIN,
   DEV_ENV,
@@ -24,23 +24,18 @@ import {
   REFRESH_TOKEN_NAME,
   TOKEN_REFESH_MSG,
 } from "@utils/strings";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const register = async (req: Req, res: Res, next: NextFn) => {
   try {
     const account = req.query.account;
-    const url =
-      account === ADMIN
-        ? getAdminServiceURL(req.originalUrl)
-        : getUserServiceURL(req.originalUrl);
+    const targetUrl = account === ADMIN ? ADMIN_SERVICE_URL : USER_SERVICE_URL;
 
-    const [response, status] = await forwardRequest(
-      url,
-      req.method,
-      req.body,
-      req.headers,
-    );
-
-    res.status(status).json(response);
+    return createProxyMiddleware({
+      target: `${targetUrl}/api/auth`,
+      changeOrigin: true,
+      logger: console,
+    })(req, res, next);
   } catch (error) {
     next(error);
   }
@@ -48,43 +43,57 @@ const register = async (req: Req, res: Res, next: NextFn) => {
 
 const login = async (req: Req, res: Res, next: NextFn) => {
   try {
+    console.log("first");
     const account = req.query.account;
-    const url =
-      account === ADMIN
-        ? getAdminServiceURL(req.originalUrl)
-        : getUserServiceURL(req.originalUrl);
+    const targetUrl = account === ADMIN ? ADMIN_SERVICE_URL : USER_SERVICE_URL;
 
-    const [response, status] = await forwardRequest(
-      url,
-      req.method,
-      req.body,
-      req.headers,
-    );
+    return createProxyMiddleware({
+      target: `${targetUrl}/api/auth`,
+      changeOrigin: true,
+      selfHandleResponse: true,
+      on: {
+        proxyRes: (proxyRes, req: Req, res: Res) => {
+          let body = "";
+          proxyRes.on("data", chunk => {
+            body += chunk;
+          });
 
-    const refreshtoken = generateToken(
-      { username: response.data.username, role: response.data.role },
-      REFRESH_TOKEN,
-      REFRESH_TOKEN_EXPIRY,
-    );
+          proxyRes.on("end", () => {
+            try {
+              const response = JSON.parse(body);
+              console.log(response);
+              const refreshtoken = generateToken(
+                { username: response.data.username, role: response.data.role },
+                REFRESH_TOKEN,
+                REFRESH_TOKEN_EXPIRY,
+              );
 
-    const accessToken = generateToken(
-      { username: response.data.username, role: response.data.role },
-      ACCESS_TOKEN,
-      ACCESS_TOKEN_EXPIRY,
-    );
+              const accessToken = generateToken(
+                { username: response.data.username, role: response.data.role },
+                ACCESS_TOKEN,
+                ACCESS_TOKEN_EXPIRY,
+              );
 
-    res.cookie(REFRESH_TOKEN_NAME, refreshtoken, {
-      httpOnly: true,
-      secure: NODE_ENV !== DEV_ENV,
-      sameSite: "strict",
-      maxAge: REFRESH_TOKEN_MAX_AGE,
-    });
+              res.cookie(REFRESH_TOKEN_NAME, refreshtoken, {
+                httpOnly: true,
+                secure: NODE_ENV !== DEV_ENV,
+                sameSite: "strict",
+                maxAge: REFRESH_TOKEN_MAX_AGE,
+              });
 
-    response.data = {
-      username: response.data.username,
-      accessToken: accessToken,
-    };
-    res.status(status).json(response);
+              response.data = {
+                username: response.data.username,
+                accessToken: accessToken,
+              };
+              res.status(proxyRes.statusCode ?? 500).json(response);
+            } catch (error) {
+              console.error("Error processing proxy response:", error);
+              res.status(500).json({ error: "Internal Server Error" });
+            }
+          });
+        },
+      },
+    })(req, res, next);
   } catch (error) {
     next(error);
   }
