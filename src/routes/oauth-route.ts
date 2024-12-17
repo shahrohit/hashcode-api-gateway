@@ -1,12 +1,14 @@
-import adminController from "@/controller/authController";
+import express from "express";
+
+import authController from "@controller/authController";
 import {
   googleAuth,
   googleAuthCallback,
-} from "@/middlewares/googleAuthentication";
-import express from "express";
+} from "@/middlewares/google-authentication";
+
 const oAuthRouter = express.Router();
 
 oAuthRouter.get("/google", googleAuth);
-oAuthRouter.get("/google/callback", googleAuthCallback, adminController.OAuth);
+oAuthRouter.get("/google/callback", googleAuthCallback, authController.OAuth);
 
 export default oAuthRouter;

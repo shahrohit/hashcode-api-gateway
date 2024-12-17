@@ -1,15 +1,12 @@
-// var GoogleStrategy = require('passport-google-oauth20').Strategy;
+import axios from "axios";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+
 import {
-  ACCESS_TOKEN,
-  ACCESS_TOKEN_EXPIRY,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   USER_SERVICE_URL,
-} from "./server-config";
-import { generateToken } from "@/utils/tokens";
-import axios from "axios";
+} from "@config/server-config";
 
 passport.use(
   new GoogleStrategy(
@@ -18,7 +15,7 @@ passport.use(
       clientSecret: GOOGLE_CLIENT_SECRET,
       callbackURL: "/auth/google/callback",
     },
-    async function (accessToken, refreshToken, profile, cb) {
+    async function (_, __, profile, cb) {
       try {
         const body = {
           name: profile._json.name!,

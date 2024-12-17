@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { DEV_ENV } from "@utils/strings";
+import { DEV_ENV } from "@utils/constant";
 
 export const PORT = +(process.env.PORT || 4000);
 export const NODE_ENV = process.env.NODE_ENV || DEV_ENV;
@@ -15,6 +15,9 @@ export const REFRESH_TOKEN = process.env.REFRESH_TOKEN!;
 export const REFRESH_TOKEN_DAY = +(process.env.REFRESH_TOKEN_DAY || 7);
 export const REFRESH_TOKEN_EXPIRY = `${REFRESH_TOKEN_DAY}d`;
 export const REFRESH_TOKEN_MAX_AGE = REFRESH_TOKEN_DAY * 24 * 60 * 60 * 1000;
+
+export const CLIENT_URL = process.env.CLIENT_URL!;
+export const ADMIN_URL = process.env.ADMIN_URL!;
 
 export const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL!;
 export const USER_SERVICE_URL = process.env.USER_SERVICE_URL!;

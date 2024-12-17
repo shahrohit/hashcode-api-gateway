@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import { Unauthorized } from "./errors";
+
+import { Unauthorized } from "@utils/errors";
 
 export const generateToken = (
   payload: any,

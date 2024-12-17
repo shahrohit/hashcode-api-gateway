@@ -1,20 +1,26 @@
+import axios from "axios";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import { StatusCodes } from "http-status-codes";
+
 import {
   NextFunction as NextFn,
   Request as Req,
   Response as Res,
 } from "express";
-import { StatusCodes } from "http-status-codes";
 
 import {
   ACCESS_TOKEN,
   ACCESS_TOKEN_EXPIRY,
   ADMIN_SERVICE_URL,
+  CLIENT_URL,
   NODE_ENV,
   REFRESH_TOKEN,
   REFRESH_TOKEN_EXPIRY,
   REFRESH_TOKEN_MAX_AGE,
   USER_SERVICE_URL,
 } from "@config/server-config";
+
+import handleLoginResponse from "@controller/login-controller";
 
 import { generateToken, verifyToken } from "@utils/tokens";
 import {
@@ -23,10 +29,10 @@ import {
   LOGGED_OUT_MSG,
   REFRESH_TOKEN_NAME,
   TOKEN_REFESH_MSG,
-} from "@utils/strings";
-import { createProxyMiddleware } from "http-proxy-middleware";
+  USER,
+} from "@utils/constant";
 
-const register = async (req: Req, res: Res, next: NextFn) => {
+const registerProxy = async (req: Req, res: Res, next: NextFn) => {
   try {
     const account = req.query.account;
     const targetUrl = account === ADMIN ? ADMIN_SERVICE_URL : USER_SERVICE_URL;
@@ -40,7 +46,7 @@ const register = async (req: Req, res: Res, next: NextFn) => {
   }
 };
 
-const login = async (req: Req, res: Res, next: NextFn) => {
+const loginProxy = async (req: Req, res: Res, next: NextFn) => {
   try {
     const account = req.query.account;
     const targetUrl = account === ADMIN ? ADMIN_SERVICE_URL : USER_SERVICE_URL;
@@ -50,50 +56,7 @@ const login = async (req: Req, res: Res, next: NextFn) => {
       changeOrigin: true,
       selfHandleResponse: true,
       on: {
-        proxyRes: (proxyRes, req: Req, res: Res) => {
-          let body = "";
-          proxyRes.on("data", chunk => {
-            body += chunk;
-          });
-
-          proxyRes.on("end", () => {
-            try {
-              const response = JSON.parse(body);
-
-              if (proxyRes.statusCode !== 200) {
-                res.status(proxyRes.statusCode ?? 500).json(response);
-                return;
-              }
-
-              const refreshtoken = generateToken(
-                { username: response.data.username, role: response.data.role },
-                REFRESH_TOKEN,
-                REFRESH_TOKEN_EXPIRY,
-              );
-
-              const accessToken = generateToken(
-                { username: response.data.username, role: response.data.role },
-                ACCESS_TOKEN,
-                ACCESS_TOKEN_EXPIRY,
-              );
-
-              res.cookie(REFRESH_TOKEN_NAME, refreshtoken, {
-                httpOnly: true,
-                secure: NODE_ENV !== DEV_ENV,
-                sameSite: "strict",
-                maxAge: REFRESH_TOKEN_MAX_AGE,
-              });
-
-              response.data = {
-                username: response.data.username,
-                accessToken: accessToken,
-              };
-              res.status(proxyRes.statusCode ?? 500).json(response);
-            } catch (error) {
-              next(error);
-            }
-          });
-        },
+        proxyRes: handleLoginResponse,
       },
     })(req, res, next);
   } catch (error) {
@@ -112,14 +75,18 @@ const refreshAccessToken = async (req: Req, res: Res, next: NextFn) => {
       ACCESS_TOKEN_EXPIRY,
     );
 
-    // issue a new refresh token (token rotation)
     const newRefreshToken = generateToken(
       decode,
       REFRESH_TOKEN,
       REFRESH_TOKEN_EXPIRY,
     );
 
-    // Update the refresh token in the cookie
+    const response = await axios.get(
+      `${USER_SERVICE_URL}/api/users/${decode.username}`,
+    );
+    const user = response.data.data;
+    user.accessToken = newAccessToken;
+
     res.cookie(REFRESH_TOKEN_NAME, newRefreshToken, {
       httpOnly: true,
       secure: NODE_ENV !== DEV_ENV,
@@ -131,34 +98,35 @@ const refreshAccessToken = async (req: Req, res: Res, next: NextFn) => {
       succcess: true,
       statusCode: StatusCodes.OK,
       message: TOKEN_REFESH_MSG,
-      data: {
-        username: decode.username,
-        accessToken: newAccessToken,
-      },
+      data: user,
     });
   } catch (error) {
     next(error);
   }
 };
 
-const logout = (_: Req, res: Res) => {
-  res.clearCookie(REFRESH_TOKEN_NAME, {
-    httpOnly: true,
-    secure: NODE_ENV !== DEV_ENV,
-    sameSite: "strict",
-  });
-  res.status(StatusCodes.OK).json({
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: LOGGED_OUT_MSG,
-  });
+const logout = (_: Req, res: Res, next: NextFn) => {
+  try {
+    res.clearCookie(REFRESH_TOKEN_NAME, {
+      httpOnly: true,
+      secure: NODE_ENV !== DEV_ENV,
+      sameSite: "strict",
+    });
+    res.status(StatusCodes.OK).json({
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: LOGGED_OUT_MSG,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const OAuth = (req: Req, res: Res, next: NextFn) => {
   try {
     const user = req.user as { username: string };
     const refreshtoken = generateToken(
-      { username: user.username, role: "User" },
+      { username: user.username, role: USER },
       REFRESH_TOKEN,
       REFRESH_TOKEN_EXPIRY,
     );
@@ -169,15 +137,15 @@ const OAuth = (req: Req, res: Res, next: NextFn) => {
       sameSite: "strict",
       maxAge: REFRESH_TOKEN_MAX_AGE,
     });
-    res.redirect("http://localhost:3000");
+    res.redirect(CLIENT_URL);
   } catch (error) {
     next(error);
   }
 };
 
 const adminController = {
-  register,
-  login,
+  registerProxy,
+  loginProxy,
   refreshAccessToken,
   logout,
   OAuth,

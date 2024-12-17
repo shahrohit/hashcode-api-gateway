@@ -8,7 +8,7 @@ import { AxiosError } from "axios";
 import { JsonWebTokenError } from "jsonwebtoken";
 
 import BaseError from "@utils/errors";
-import { TOKEN_EXPIRE_MSG } from "@utils/strings";
+import { TOKEN_EXPIRE_MSG } from "@utils/constant";
 
 function errorHandler(err: Error, _: Req, res: Res, __: NextFn) {
   if (err instanceof BaseError) {

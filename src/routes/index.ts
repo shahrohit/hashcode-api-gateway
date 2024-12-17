@@ -1,19 +1,18 @@
 import express from "express";
 
-import authRouter from "@routes/authRoute";
-import verifyLogin, { optionalVerifyLogin } from "@middlewares/verifyLogin";
-import verifyRole from "@middlewares/verifyRole";
-import userController from "@controller/userController";
-import adminController from "@controller/adminController";
-import submissionController from "@controller/submissionController";
-import { ADMIN, USER } from "@utils/strings";
-import bodyParser from "body-parser";
-import proxyRequest from "@/config/proxy-middleware";
 import {
   ADMIN_SERVICE_URL,
   SUBMISSION_SERVICE_URL,
   USER_SERVICE_URL,
-} from "@/config/server-config";
+} from "@config/server-config";
+import proxyRequest from "@config/proxy-middleware";
+
+import verifyLogin, { optionalVerifyLogin } from "@/middlewares/verify-login";
+import verifyRole from "@/middlewares/verify-role";
+
+import authRouter from "@/routes/auth-route";
+import { ADMIN, USER } from "@utils/constant";
+
 const apiRouter = express.Router();
 
 apiRouter.use("/auth", authRouter);

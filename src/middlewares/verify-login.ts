@@ -6,15 +6,18 @@ import {
 
 import { ACCESS_TOKEN } from "@config/server-config";
 import { verifyToken } from "@utils/tokens";
-import { USERNAME_HEADER, ROLE_HEADER } from "@utils/strings";
+import {
+  USERNAME_HEADER,
+  ROLE_HEADER,
+  AUTHORIZATION,
+  BEARER,
+} from "@utils/constant";
 
 const verifyLogin = async (req: Req, _: Res, next: NextFn) => {
   try {
-    // verify the token
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    const token = req.header(AUTHORIZATION)?.replace(BEARER, "");
     const decode = verifyToken(token, ACCESS_TOKEN);
 
-    // set the headers
     req.headers[USERNAME_HEADER] = decode.username;
     req.headers[ROLE_HEADER] = decode.role;
 
@@ -24,14 +27,10 @@ const verifyLogin = async (req: Req, _: Res, next: NextFn) => {
   }
 };
 
-// Optional Verification for the Users routes
-// user can be logged in or can be guest user
-const optionalVerifyLogin = async (req: Req, res: Res, next: NextFn) => {
+const optionalVerifyLogin = async (req: Req, _: Res, next: NextFn) => {
   try {
-    // Extract the token
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    const token = req.header(AUTHORIZATION)?.replace(BEARER, "");
 
-    // for the logged in user else for the guest user
     if (token) {
       const decode = verifyToken(token, ACCESS_TOKEN);
       req.headers[USERNAME_HEADER] = decode.username;
