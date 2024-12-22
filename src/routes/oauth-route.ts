@@ -1,6 +1,6 @@
 import express from "express";
 
-import authController from "@controller/authController";
+import authController from "@/controller/auth-controller";
 import {
   googleAuth,
   googleAuthCallback,

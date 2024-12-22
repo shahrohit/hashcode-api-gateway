@@ -13,6 +13,8 @@ import errorHandler from "@middlewares/error-handler";
 import apiRouter from "@routes/index";
 import oAuthRouter from "@routes/oauth-route";
 
+import checkHealth from "@controller/health-controller";
+
 const app = express();
 const server = http.createServer(app);
 
@@ -22,8 +24,8 @@ app.use(cookieParser());
 
 app.use("/api", apiRouter);
 app.use("/socket.io", socketIoProxy);
-
 app.use("/auth", oAuthRouter);
+app.get("/health", checkHealth);
 
 app.use(errorHandler);
 
