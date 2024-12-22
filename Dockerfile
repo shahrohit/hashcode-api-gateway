@@ -1,7 +1,7 @@
 # Use a Node.js base image
 FROM node:20-slim
 
-# Install OpenSSL development libraries (if needed for your app)
+# Install OpenSSL development libraries
 RUN apt-get update && apt-get install -y \
     curl \
     openssl \
@@ -23,7 +23,7 @@ COPY . .
 # Build the TypeScript files
 RUN npm run build
 
-# Expose the service port (default: 3000 for Express)
+# Expose the service port
 EXPOSE 8080
 
 # Command to run the application

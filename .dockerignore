@@ -1,13 +1,15 @@
 node_modules
 npm-debug.log
 
-.eslintignore
-.eslintrc.json
+dist
+
+eslint.config.js
 .prettierrc
-sample-env.txt
-.gitignore
 
 .env
-.git
+sample-env.txt
 
-dist
+.git
+.gitignore
+
+readme.md

@@ -82,14 +82,13 @@ const refreshAccessToken = async (req: Req, res: Res, next: NextFn) => {
       REFRESH_TOKEN_EXPIRY,
     );
     let user: { [name: string]: string } = {};
-    console.log(decode);
     if (decode.role === "User") {
       const response = await axios.get(
         `${USER_SERVICE_URL}/api/users/${decode.username}`,
       );
       user = response.data.data;
       user.accessToken = newAccessToken;
-    } else if (decode.role === "ADMIN") {
+    } else if (decode.role === "Admin") {
       user = {
         username: "ADMIN",
         accessToken: newAccessToken,
